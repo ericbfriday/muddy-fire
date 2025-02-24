@@ -1,7 +1,8 @@
 {
   "name": "muddy-fire",
   "scripts": {
-    "dev": "bun run --hot src/index.ts"
+    "dev": "bun run --hot src/server/index.ts",
+    "update-browserslist": "bunx --bun update-browserslist-db@latest"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.4.3",
@@ -9,7 +10,8 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@types/bun": "latest",
-    "@hono/eslint-config": "^1.0.2"
+    "@types/bun": "^1.2.3",
+    "@hono/eslint-config": "^1.0.2",
+    "bunmagic": "^1.2.6"
   }
 }

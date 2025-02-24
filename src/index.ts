@@ -1,16 +1,17 @@
 import { zValidator } from '@hono/zod-validator';
 import type { ServerWebSocket } from 'bun';
 import { Hono } from 'hono';
-import { env } from 'hono/adapter';
-import { basicAuth } from 'hono/basic-auth';
+// import { env } from 'hono/adapter';
 import { createBunWebSocket, serveStatic } from 'hono/bun';
 import { cors } from 'hono/cors';
 
 import { createMiddleware } from 'hono/factory';
 import { logger } from 'hono/logger';
 import { prettyJSON } from 'hono/pretty-json';
-import { secureHeaders } from 'hono/secure-headers';
+// import { secureHeaders } from 'hono/secure-headers';
+import type { WSEvents } from 'hono/ws';
 import { z } from 'zod';
+import { GMCPSchema } from './medievia/gmcp-schemas';
 
 const characterNames: string[] =
   JSON.parse(Bun.env.CHARACTER_NAMES_JSON ?? '[]') ?? ([] as string[]);
@@ -23,23 +24,24 @@ type Env = {
   };
 };
 
-// https://hono.dev/docs/helpers/websocket
-const { upgradeWebSocket, websocket } = createBunWebSocket<ServerWebSocket>();
-
 // 1. Set the `Env` to `new Hono()`
-const app = new Hono<Env>();
+export const app = new Hono<Env>();
 // 2. Set the `Env` to `createMiddleware()`
-const mw = createMiddleware<Env>(async (c, next) => {
-  await next();
-});
+// const mw = createMiddleware<Env>(async (c, next) => {
+//   await next();
+// });
 
-app.use(mw);
+// app.use(mw);
+// https://hono.dev/docs/helpers/websocket
+const { upgradeWebSocket, websocket } =
+  createBunWebSocket<ServerWebSocket<Env>>();
+
 // https://hono.dev/docs/middleware/builtin/secure-headers
-app.use(secureHeaders());
+// app.use(secureHeaders());
 // https://hono.dev/docs/middleware/builtin/cors
 app.use('/api/*', cors());
 app.use(logger());
-app.use(prettyJSON());
+app.use(prettyJSON({ space: 2 }));
 // app.use(
 //   basicAuth({
 //     verifyUser: (username, password, c) => {
@@ -54,55 +56,42 @@ app.get('/', (c) => {
   return c.text('Hello Hono!');
 });
 
-app.post(
-  '/api/name',
-  zValidator('json', z.object({ name: z.string() })),
-  (c) => {
-    const { name } = c.req.valid('json');
-    return c.json({ message: `Hello ${name}!` });
-  },
-);
-
-app.get('/env', (c) => {
-  // HOSTNAME is process.env.HOSTNAME on Node.js or Bun
-  // HOSTNAME is the value written in `wrangler.toml` on Cloudflare
-  const { HOSTNAME } = env<{ HOSTNAME: string }>(c);
-  return c.text(HOSTNAME);
-});
-
-app.post('/gmcp', zValidator('json', z.object({}).passthrough()), (c) => {
-  console.log(JSON.stringify(c.req.json()));
-  return c.json({ message: 'Hello!' });
-});
-
 app.get(
   '/ws',
-  upgradeWebSocket((c) => {
-    let intervalRef: Timer | undefined;
+  upgradeWebSocket(() => {
+    // let intervalRef: Timer | undefined;
     return {
-      onMessage(evt, ws) {
-        console.debug(evt);
-        console.log(`Message from client: ${evt.data}`);
+      onMessage(event, ws) {
+        console.log(JSON.stringify(event));
+        console.log(`Message from client: ${event.data}`);
         ws.send('Hello from server!');
       },
-      onOpen(evt, ws) {
-        console.debug(evt);
-        console.log('Connection opened');
-        intervalRef = setInterval(() => {
-          ws.send('Bun is open!');
-        }, 15000);
-      },
-      onClose: (evt, ws) => {
-        console.debug(evt);
+      onClose: () => {
         console.log('Connection closed');
-        intervalRef?.unref();
       },
-      onError(evt, ws) {
-        console.debug(evt);
-        console.error(`Error: ${evt}`);
-        // ws.close();
-      },
-    };
+      // onMessage(evt, ws) {
+      //   console.debug(evt);
+      //   console.log(`Message from client: ${evt.data}`);
+      //   ws.send('Hello from server!');
+      // },
+      // onOpen(evt, ws) {
+      //   console.debug(evt);
+      //   console.log('Connection opened');
+      //   intervalRef = setInterval(() => {
+      //     ws.send(new Date().toISOString());
+      //   }, 15000);
+      // },
+      // onClose: (evt, ws) => {
+      //   console.debug(evt);
+      //   console.log('Connection closed');
+      //   clearInterval(intervalRef);
+      // },
+      // onError(evt, ws) {
+      //   console.debug(evt);
+      //   console.error(`Error: ${evt}`);
+      //   ws.close();
+      // },
+    } satisfies WSEvents<ServerWebSocket<Env>>;
   }),
 );
 
@@ -112,6 +101,22 @@ app.notFound((c) => {
 app.onError((err, c) => {
   console.error(`${err}`);
   return c.text('Custom Error Message', 500);
+});
+
+app.post(
+  '/api/name',
+  zValidator('json', z.object({ name: z.string() })),
+  (c) => {
+    const { name } = c.req.valid('json');
+    return c.json({ message: `Hello ${name}!` });
+  },
+);
+
+app.post('/gmcp', (c) => {
+  const body = c.req.json();
+  // zValidator('json', GMCPSchema.passthrough()),
+  console.log(JSON.stringify(c.req.json()));
+  return c.json({ message: 'Hello!' });
 });
 
 export default {

@@ -9,8 +9,17 @@ export const VitalsSchema = z.object({
   mounted: z.number().min(0).max(1), // 0 = false, 1 = true
   mv: z.number().safe(),
 });
+export const AfflicationsSchema = z.object({
+  Add: z.object({
+    name: z.string(),
+    ticks: z.number(),
+    modifier: z.string().optional(),
+  }),
+  Remove: z.string().optional(),
+});
 export const CharSchema = z.object({
-  Char: z.object({ Vitals: VitalsSchema }),
+  Vitals: VitalsSchema,
+  Afflictions: AfflicationsSchema.optional(),
 });
 export const DiscordInfoSchema = z.object({
   applicationid: z.string().default('1321530294448427139'),
