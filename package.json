@@ -3,16 +3,19 @@
   "scripts": {
     "dev": "bun run --hot src/server/index.ts",
     "dev-full": "bun run --hot src/frontend/index.ts",
-    "update-browserslist": "bunx --bun update-browserslist-db@latest"
+    "update-browserslist": "bunx --bun update-browserslist-db@latest",
+    "lint": "bun eslint ."
   },
   "dependencies": {
     "@hono/zod-validator": "^0.4.3",
+    "drizzle-orm": "^0.39.3",
     "hono": "^4.7.2",
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@types/bun": "^1.2.3",
+    "bunmagic": "^1.2.6",
     "@hono/eslint-config": "^1.0.2",
-    "bunmagic": "^1.2.6"
+    "@types/bun": "latest",
+    "drizzle-kit": "^0.30.4"
   }
 }

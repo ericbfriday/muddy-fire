@@ -1,11 +1,10 @@
 import { zValidator } from '@hono/zod-validator';
 import type { ServerWebSocket } from 'bun';
 import { Hono } from 'hono';
-// import { env } from 'hono/adapter';
+import { env } from 'hono/adapter';
 import { createBunWebSocket, serveStatic } from 'hono/bun';
 import { cors } from 'hono/cors';
 
-import { createMiddleware } from 'hono/factory';
 import { logger } from 'hono/logger';
 import { prettyJSON } from 'hono/pretty-json';
 // import { secureHeaders } from 'hono/secure-headers';
@@ -54,6 +53,22 @@ app.use('/static/*', serveStatic({ root: './' }));
 app.use('/favicon.ico', serveStatic({ path: './favicon.ico' }));
 app.get('/', (c) => {
   return c.text('Hello Hono!');
+});
+
+app.post(
+  '/api/name',
+  zValidator('json', z.object({ name: z.string() })),
+  (c) => {
+    const { name } = c.req.valid('json');
+    return c.json({ message: `Hello ${name}!` });
+  },
+);
+
+app.get('/env', (c) => {
+  // HOSTNAME is process.env.HOSTNAME on Node.js or Bun
+  // HOSTNAME is the value written in `wrangler.toml` on Cloudflare
+  const { HOSTNAME } = env<{ HOSTNAME: string }>(c);
+  return c.text(HOSTNAME);
 });
 
 app.get(

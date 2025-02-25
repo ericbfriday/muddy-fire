@@ -37,20 +37,14 @@ export const ExternalDiscordSchema = z.object({
   Info: DiscordInfoSchema,
   Status: DiscordStatusSchema,
 });
-// const ExitValues: Readonly<string[]> = ["n", "s", "e", "w", "u", "d"] as const;
-
-export const ExitsSchema = z.object({
-  n: z.string().optional(),
-  s: z.string().optional(),
-  e: z.string().optional(),
-  w: z.string().optional(),
-
-  u: z.string().optional(),
-  d: z.string().optional(),
-});
+export const ExitValues = ['n', 's', 'e', 'w', 'u', 'd'] as const;
+export const ExitValuesSchema = z
+  .set(z.enum(ExitValues))
+  .min(0)
+  .max(ExitValues.length);
+export const ExitSchema = z.record(ExitValuesSchema, z.string().nonempty());
 export const RoomInfoSchema = z.object({
-  exits: ExitsSchema,
-
+  exits: ExitSchema,
   name: z.string().describe('The name of the current room'),
   pk: z.enum(['LPK', 'NPK', 'CPK']).describe('The PK type of the room'),
 });
@@ -63,3 +57,50 @@ export const GMCPSchema = z.object({
   External: ExternalDiscordSchema,
   Room: RoomSchema,
 });
+
+const testValues = [
+  {
+    Char: {
+      Afflictions: { Remove: 'Breathe Water' },
+      Vitals: {
+        maxMana: 925,
+        mounted: 0,
+        br: 100,
+        maxHp: 891,
+        mv: 610,
+        mana: 925,
+        hp: 891,
+        maxMv: 610,
+      },
+    },
+    External: {
+      Discord: {
+        Info: {
+          inviteurl: 'https://discord.gg/WanRtHwxsR',
+          applicationid: '1321530294448427139',
+        },
+        Status: {
+          partymax: 0,
+          smallimage: ['server-icon'],
+          smallimagetext: 'Medievia Online',
+          game: 'Medievia',
+          starttime: '1740279322',
+          partysize: 0,
+        },
+      },
+    },
+    Room: {
+      Info: {
+        exits: {
+          s: 'Avadale Road, South of the Main Courtyard',
+          e: 'The Main Courtyard of Medievia',
+          u: 'On a Wide Rope and Plank Ladder',
+          w: 'The Main Courtyard of Medievia',
+          n: 'The City of Medievia - Castle Square',
+        },
+        name: 'The Main Courtyard of Medievia',
+        pk: 'LPK',
+      },
+    },
+  },
+];
