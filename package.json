@@ -2,6 +2,7 @@
   "name": "muddy-fire",
   "scripts": {
     "dev": "bun run --hot src/server/index.ts",
+    "dev-full": "bun run --hot src/frontend/index.ts",
     "update-browserslist": "bunx --bun update-browserslist-db@latest"
   },
   "dependencies": {
